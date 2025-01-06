@@ -13,7 +13,7 @@ class FlutterRunProcessHandler extends ProcessHandler {
   // `An Observatory debugger and profiler on AOSP on IA Emulator is available at: http://127.0.0.1:51322/BI_fyYaeoCE=/`
   // `Observatory URL on device: http://127.0.0.1:37849/t2xp9hvaxNs=/`
   static final RegExp _observatoryDebuggerUriRegex = RegExp(
-    r'.*[:] (http[s]?:.*\/).*',
+    r'.*[:] (http[s]?:\/\/127\.0\.0\.1:\d+\/.*\/).*',
     caseSensitive: false,
     multiLine: false,
   );
@@ -162,13 +162,13 @@ class FlutterRunProcessHandler extends ProcessHandler {
       runInShell: true,
     );
 
-    _processStdoutStream =
-        _runningProcess!.stdout.transform(utf8.decoder).asBroadcastStream();
+    stdout.writeln('####### Waiting for 5 seconds');
+    await Future.delayed(Duration(seconds: 5));
 
-    _openSubscriptions.add(_runningProcess!.stderr
-        .map((events) => String.fromCharCodes(events).trim())
-        .where((event) => event.isNotEmpty)
-        .listen((event) {
+    _processStdoutStream = _runningProcess!.stdout.transform(utf8.decoder).asBroadcastStream();
+
+    _openSubscriptions.add(
+        _runningProcess!.stderr.map((events) => String.fromCharCodes(events).trim()).where((event) => event.isNotEmpty).listen((event) {
       if (event.contains(_errorMessageRegex)) {
         stderr.writeln('${FAIL_COLOR}Flutter build error: $event$RESET_COLOR');
       } else {
@@ -249,8 +249,7 @@ class FlutterRunProcessHandler extends ProcessHandler {
         } else if (_noConnectedDeviceRegex.hasMatch(logLine)) {
           sub?.cancel();
           if (!completer.isCompleted) {
-            stderr.writeln(
-                '${FAIL_COLOR}No connected devices found to run app on and tests against$RESET_COLOR');
+            stderr.writeln('${FAIL_COLOR}No connected devices found to run app on and tests against$RESET_COLOR');
           }
         } else if (_moreThanOneDeviceConnectedDeviceRegex.hasMatch(logLine)) {
           sub?.cancel();
@@ -267,8 +266,7 @@ class FlutterRunProcessHandler extends ProcessHandler {
 
   void _ensureRunningProcess() {
     if (_runningProcess == null) {
-      throw Exception(
-          'FlutterRunProcessHandler: flutter run process is not active');
+      throw Exception('FlutterRunProcessHandler: flutter run process is not active');
     }
   }
 }
